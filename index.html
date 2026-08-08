@@ -54,16 +54,16 @@
     <div class="wordmark">Glow<span>Find</span></div>
     <div class="tag">AI Beauty Scanner</div>
 
-    <!-- iOS: shown while auto-redirect fires; button is the guaranteed one-tap -->
+    <!-- iOS: auto-open is attempted on load; the button is the guaranteed one-tap
+         (Instagram/TikTok in-app browsers block silent redirects — a tap works). -->
     <div id="ios" class="hidden">
-      <div class="headline">Opening the App Store…</div>
-      <div class="sub">Tap below if it doesn’t open automatically.</div>
+      <div class="headline">Get GlowFind</div>
+      <div class="sub">Tap to open the App Store 👇</div>
       <a id="appstore" class="btn" href="#">
         <span class="apple"></span>
         <span class="lbl"><small>Download on the</small><b>App Store</b></span>
       </a>
-      <div class="spin"></div>
-      <div class="hint" style="margin-top:14px">Stuck? Tap <b>•••</b> at the top right → <b>Open in Safari</b>.</div>
+      <div class="hint" style="margin-top:16px">Not opening? Tap <b>•••</b> (top right) → <b>Open in Safari</b>.</div>
     </div>
 
     <!-- Desktop -->
@@ -88,32 +88,32 @@
 <script>
   (function(){
     var ID = "6768039689";
-    // Attribution: ?src= (or ?ct=) becomes the App Store campaign token so installs
-    // show up in App Store Connect > App Analytics > Acquisition > Campaigns.
+    // Use the CANONICAL App Store URL (no 301 redirect hop — a redirect can break
+    // the App Store handoff inside Instagram/TikTok webviews). Attribution: ?src=
+    // (or ?ct=) becomes the App Store campaign token, visible in App Store Connect
+    // > App Analytics > Acquisition > Campaigns.
+    var CANON = 'https://apps.apple.com/us/app/glowfind-ai-skincare-scanner/id' + ID;
     var p = new URLSearchParams(location.search);
     var src = (p.get('src') || p.get('ct') || 'instagram').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,40) || 'instagram';
-    var qs = '?ct=' + encodeURIComponent(src) + '&mt=8';
-    // Instagram/TikTok in-app browsers silently swallow https://apps.apple.com
-    // navigations (endless "Opening…" spinner). The itms-apps:// scheme is
-    // intercepted by iOS at the OS level and opens the App Store app even from
-    // inside those webviews. Keep an https link as the Safari/desktop fallback.
-    var appUrl = 'itms-apps://apps.apple.com/app/id' + ID + qs;
-    var webUrl = 'https://apps.apple.com/app/id' + ID + qs;
+    var storeUrl = CANON + '?ct=' + encodeURIComponent(src);
 
     var ua = navigator.userAgent || '';
-    var isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Mac/i.test(ua) && 'ontouchend' in document);
-    var isAndroid = /Android/i.test(ua);
+    // ?force=ios|android and ?noauto=1 are test hooks (harmless in prod).
+    var force = p.get('force');
+    var isIOS = force === 'ios' || /iPhone|iPad|iPod/i.test(ua) || (/Mac/i.test(ua) && 'ontouchend' in document);
+    var isAndroid = force === 'android' || /Android/i.test(ua);
 
-    document.getElementById('appstore').href = appUrl;
+    var a = document.getElementById('appstore');
+    if (a) a.href = storeUrl;
 
     if (isIOS) {
       document.getElementById('ios').classList.remove('hidden');
-      // One-tap-feel: auto-fire the App Store scheme; the visible button is the
-      // guaranteed fallback if the webview blocks auto-navigation.
-      setTimeout(function(){ location.href = appUrl; }, 250);
-      // If the App Store app didn't take over (still visible after a beat),
-      // fall back to the https link, which Safari opens directly.
-      setTimeout(function(){ if (!document.hidden) location.href = webUrl; }, 1600);
+      // Best-effort auto-open: works in Safari and normal browsers. Instagram/TikTok
+      // in-app browsers block silent navigation (no user gesture) — there the big
+      // button is the guaranteed one tap. location.replace so Back returns to IG.
+      if (p.get('noauto') !== '1') {
+        setTimeout(function(){ try { window.location.replace(storeUrl); } catch (e) { location.href = storeUrl; } }, 100);
+      }
     } else if (isAndroid) {
       document.getElementById('android').classList.remove('hidden');
     } else {
