@@ -54,8 +54,8 @@
     <div class="wordmark">Glow<span>Find</span></div>
     <div class="tag">AI Beauty Scanner</div>
 
-    <!-- iOS: auto-open is attempted on load; the button is the guaranteed one-tap
-         (Instagram/TikTok in-app browsers block silent redirects — a tap works). -->
+    <!-- iOS manual fallback: only shown if the in-app-browser breakout didn't fire
+         (e.g. TikTok, or the rare case the scheme is blocked). A real tap works. -->
     <div id="ios" class="hidden">
       <div class="headline">Get GlowFind</div>
       <div class="sub">Tap to open the App Store 👇</div>
@@ -63,7 +63,7 @@
         <span class="apple"></span>
         <span class="lbl"><small>Download on the</small><b>App Store</b></span>
       </a>
-      <div class="hint" style="margin-top:16px">Not opening? Tap <b>•••</b> (top right) → <b>Open in Safari</b>.</div>
+      <div class="hint" style="margin-top:16px">Not opening? Tap <b>•••</b> (top right) → <b>Open in browser</b>.</div>
     </div>
 
     <!-- Desktop -->
@@ -88,32 +88,53 @@
 <script>
   (function(){
     var ID = "6768039689";
-    // Use the CANONICAL App Store URL (no 301 redirect hop — a redirect can break
-    // the App Store handoff inside Instagram/TikTok webviews). Attribution: ?src=
-    // (or ?ct=) becomes the App Store campaign token, visible in App Store Connect
-    // > App Analytics > Acquisition > Campaigns.
+    // Canonical App Store URL (no 301 hop). Attribution: ?src= (or ?ct=) becomes the
+    // App Store campaign token — App Store Connect > App Analytics > Acquisition > Campaigns.
     var CANON = 'https://apps.apple.com/us/app/glowfind-ai-skincare-scanner/id' + ID;
     var p = new URLSearchParams(location.search);
     var src = (p.get('src') || p.get('ct') || 'instagram').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,40) || 'instagram';
     var storeUrl = CANON + '?ct=' + encodeURIComponent(src);
 
     var ua = navigator.userAgent || '';
-    // ?force=ios|android and ?noauto=1 are test hooks (harmless in prod).
-    var force = p.get('force');
-    var isIOS = force === 'ios' || /iPhone|iPad|iPod/i.test(ua) || (/Mac/i.test(ua) && 'ontouchend' in document);
-    var isAndroid = force === 'android' || /Android/i.test(ua);
+    var force = p.get('force'); // ?force=ios|android test hook (harmless in prod)
+    var isIOS       = force === 'ios' || /iPhone|iPad|iPod/i.test(ua) || (/Mac/i.test(ua) && 'ontouchend' in document);
+    var isAndroid   = force === 'android' || /Android/i.test(ua);
+    var isInstagram = /Instagram|Barcelona/i.test(ua);
+    var isFacebook  = /FBAN|FBAV|FB_IAB|Messenger/i.test(ua);
+    var isTikTok    = /TikTok|musical_ly|Bytedance/i.test(ua);
+    var inApp = isInstagram || isFacebook || isTikTok;
 
     var a = document.getElementById('appstore');
     if (a) a.href = storeUrl;
 
-    if (isIOS) {
-      document.getElementById('ios').classList.remove('hidden');
-      // Best-effort auto-open: works in Safari and normal browsers. Instagram/TikTok
-      // in-app browsers block silent navigation (no user gesture) — there the big
-      // button is the guaranteed one tap. location.replace so Back returns to IG.
-      if (p.get('noauto') !== '1') {
-        setTimeout(function(){ try { window.location.replace(storeUrl); } catch (e) { location.href = storeUrl; } }, 100);
-      }
+    // Show the manual "tap the button" card as a fallback if a breakout/redirect
+    // doesn't take over within ~1.5s (e.g. TikTok has no breakout scheme).
+    function showManualIOS(){ document.getElementById('ios').classList.remove('hidden'); }
+    var bailed = false;
+    function markHidden(){ bailed = true; } // page hid → breakout worked, don't flash the card
+    document.addEventListener('visibilitychange', markHidden);
+    window.addEventListener('pagehide', markHidden);
+    function fallbackLater(){ setTimeout(function(){ if (!bailed && !document.hidden) showManualIOS(); }, 1500); }
+
+    if (isIOS && isInstagram) {
+      // THE FIX: Instagram's in-app browser blocks normal redirects, but it honors
+      // its own scheme instagram://extbrowser/?url=<encoded> which kicks the URL out
+      // to Safari — where the App Store link then opens the App Store app natively.
+      window.location.href = 'instagram://extbrowser/?url=' + encodeURIComponent(storeUrl);
+      fallbackLater();
+    } else if (isAndroid && inApp) {
+      // Android in-app browsers: break out to Chrome via an intent:// URL.
+      var noProto = storeUrl.replace(/^https?:\/\//, '');
+      window.location.href = 'intent://' + noProto + '#Intent;scheme=https;package=com.android.chrome;end';
+      setTimeout(function(){ if (!bailed && !document.hidden) window.location.replace(storeUrl); }, 1200);
+    } else if (isIOS && (isTikTok || isFacebook)) {
+      // No reliable breakout scheme here — try a direct nav, then show the manual card.
+      window.location.href = storeUrl;
+      fallbackLater();
+    } else if (isIOS) {
+      // Normal Safari / real browser → straight to the App Store.
+      window.location.replace(storeUrl);
+      fallbackLater();
     } else if (isAndroid) {
       document.getElementById('android').classList.remove('hidden');
     } else {
