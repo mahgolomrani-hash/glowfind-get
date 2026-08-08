@@ -63,6 +63,7 @@
         <span class="lbl"><small>Download on the</small><b>App Store</b></span>
       </a>
       <div class="spin"></div>
+      <div class="hint" style="margin-top:14px">Stuck? Tap <b>•••</b> at the top right → <b>Open in Safari</b>.</div>
     </div>
 
     <!-- Desktop -->
@@ -86,24 +87,33 @@
 
 <script>
   (function(){
-    var APPSTORE = "https://apps.apple.com/app/id6768039689";
+    var ID = "6768039689";
     // Attribution: ?src= (or ?ct=) becomes the App Store campaign token so installs
     // show up in App Store Connect > App Analytics > Acquisition > Campaigns.
     var p = new URLSearchParams(location.search);
     var src = (p.get('src') || p.get('ct') || 'instagram').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,40) || 'instagram';
-    var storeUrl = APPSTORE + '?ct=' + encodeURIComponent(src) + '&mt=8';
+    var qs = '?ct=' + encodeURIComponent(src) + '&mt=8';
+    // Instagram/TikTok in-app browsers silently swallow https://apps.apple.com
+    // navigations (endless "Opening…" spinner). The itms-apps:// scheme is
+    // intercepted by iOS at the OS level and opens the App Store app even from
+    // inside those webviews. Keep an https link as the Safari/desktop fallback.
+    var appUrl = 'itms-apps://apps.apple.com/app/id' + ID + qs;
+    var webUrl = 'https://apps.apple.com/app/id' + ID + qs;
 
     var ua = navigator.userAgent || '';
     var isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Mac/i.test(ua) && 'ontouchend' in document);
     var isAndroid = /Android/i.test(ua);
 
-    document.getElementById('appstore').href = storeUrl;
+    document.getElementById('appstore').href = appUrl;
 
     if (isIOS) {
       document.getElementById('ios').classList.remove('hidden');
-      // One-tap-feel: auto-redirect immediately; the visible button is the fallback
-      // for Instagram's in-app browser where auto-nav can be blocked.
-      setTimeout(function(){ location.href = storeUrl; }, 250);
+      // One-tap-feel: auto-fire the App Store scheme; the visible button is the
+      // guaranteed fallback if the webview blocks auto-navigation.
+      setTimeout(function(){ location.href = appUrl; }, 250);
+      // If the App Store app didn't take over (still visible after a beat),
+      // fall back to the https link, which Safari opens directly.
+      setTimeout(function(){ if (!document.hidden) location.href = webUrl; }, 1600);
     } else if (isAndroid) {
       document.getElementById('android').classList.remove('hidden');
     } else {
