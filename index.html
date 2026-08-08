@@ -35,6 +35,22 @@
   .btn b{font-size:17px;line-height:1.1}
   .apple{font-size:22px;line-height:1}
   .hint{font-size:12px;color:var(--muted);margin-top:14px}
+  .spark{width:98px;height:98px;display:block;margin:0 auto 8px;animation:bob 2.6s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .h2{font-family:var(--serif);font-weight:700;font-size:27px;margin:4px 0 20px;line-height:1.2}
+  .h2 em{font-style:italic;color:var(--rose-deep)}
+  .steps{display:flex;flex-direction:column;gap:12px;text-align:left}
+  .step{display:flex;align-items:center;gap:14px;background:var(--cream);border:1px solid var(--line);
+    border-radius:16px;padding:15px 18px;font-size:16px;color:var(--ink)}
+  .step-n{flex:none;width:30px;height:30px;border-radius:50%;background:#F6E2E8;color:var(--rose-deep);
+    font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center}
+  .step b{font-weight:700}
+  .dots{font-weight:800;letter-spacing:1.5px;font-size:18px;vertical-align:middle}
+  .corner-arrow{position:fixed;top:8px;right:12px;width:46px;height:46px;color:var(--rose-deep);
+    z-index:10;animation:point 1.3s ease-in-out infinite}
+  @keyframes point{0%,100%{transform:translate(0,0)}50%{transform:translate(5px,-5px)}}
+  /* when the Sparkle "open in browser" card shows, hide the generic app-icon header */
+  body.manual>.card>.logo,body.manual>.card>.wordmark,body.manual>.card>.tag{display:none}
   .qr{width:190px;height:190px;margin:6px auto 4px;padding:12px;background:#fff;
     border:1px solid var(--line);border-radius:16px}
   .qr svg{width:100%;height:100%;display:block}
@@ -57,13 +73,39 @@
     <!-- iOS manual fallback: only shown if the in-app-browser breakout didn't fire
          (e.g. TikTok, or the rare case the scheme is blocked). A real tap works. -->
     <div id="ios" class="hidden">
-      <div class="headline">One quick step ✨</div>
-      <div class="sub">Tap <b>•••</b> at the top-right, then <b>Open in browser</b> — it opens the App Store.</div>
-      <a id="appstore" class="btn" href="#">
-        <span class="apple"></span>
-        <span class="lbl"><small>Download on the</small><b>App Store</b></span>
-      </a>
-      <div class="hint" style="margin-top:16px">Then tap <b>Get</b> to install GlowFind.</div>
+      <svg class="spark" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <radialGradient id="sb" cx="38%" cy="28%" r="82%">
+            <stop offset="0" stop-color="#FFF9D6"/><stop offset="0.42" stop-color="#FBEC91"/>
+            <stop offset="0.72" stop-color="#F1CF66"/><stop offset="0.9" stop-color="#E0A53E"/>
+            <stop offset="1" stop-color="#C9882C"/>
+          </radialGradient>
+          <clipPath id="sc"><path d="M60.00 10.00 L73.52 31.39 L98.04 37.64 L81.87 57.11 L83.51 82.36 L60.00 73.00 L36.49 82.36 L38.13 57.11 L21.96 37.64 L46.48 31.39 Z"/></clipPath>
+        </defs>
+        <g transform="translate(0 4)">
+          <ellipse cx="60" cy="94" rx="30" ry="6.5" fill="#000" opacity="0.14"/>
+          <path d="M60.00 10.00 L73.52 31.39 L98.04 37.64 L81.87 57.11 L83.51 82.36 L60.00 73.00 L36.49 82.36 L38.13 57.11 L21.96 37.64 L46.48 31.39 Z" fill="url(#sb)"/>
+          <g clip-path="url(#sc)">
+            <ellipse cx="45" cy="24" rx="20" ry="12" fill="#FFFBE6" opacity="0.5"/>
+            <ellipse cx="43" cy="24" rx="9" ry="5.5" fill="#FFF" opacity="0.85"/>
+          </g>
+          <ellipse cx="38" cy="54" rx="5.5" ry="3.4" fill="#F4A7B0" opacity="0.9"/>
+          <ellipse cx="82" cy="54" rx="5.5" ry="3.4" fill="#F4A7B0" opacity="0.9"/>
+          <circle cx="49" cy="46" r="6.6" fill="#1B1B1B"/>
+          <circle cx="46.8" cy="43.2" r="2.3" fill="#FFF" opacity="0.95"/>
+          <path d="M75 41 L67 46 L75 51" stroke="#1B1B1B" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <path d="M53 57 Q60 62 67 57 Q66 67 60 67 Q54 67 53 57 Z" fill="#D9758A" stroke="#B85C70" stroke-width="1.2" stroke-linejoin="round"/>
+          <path d="M57 63 Q60 66 63 63 Q62 65.5 60 65.5 Q58 65.5 57 63 Z" fill="#F7A9B6"/>
+        </g>
+      </svg>
+      <div class="wordmark">Glow<span>Find</span></div>
+      <div class="h2">One more <em>step</em></div>
+      <div class="steps">
+        <div class="step"><span class="step-n">1</span><span>Tap <span class="dots">•••</span> in the top corner</span></div>
+        <div class="step"><span class="step-n">2</span><span>Tap <b>Open in browser</b></span></div>
+      </div>
+      <div class="hint" style="margin-top:18px">We'll take you straight to the App Store ✨</div>
+      <a id="appstore" href="#" style="display:none"></a>
     </div>
 
     <!-- Desktop -->
@@ -83,6 +125,14 @@
         <span class="lbl" style="text-align:center;width:100%"><b>See GlowFind</b></span>
       </a>
     </div>
+  </div>
+
+  <!-- points at the ••• menu; shown only with the manual "open in browser" card -->
+  <div id="cornerArrow" class="corner-arrow hidden" aria-hidden="true">
+    <svg viewBox="0 0 46 46" fill="none">
+      <path d="M8 40 C 22 36, 34 24, 37 10" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M26 8 L38 7 L37 19" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
   </div>
 
 <script>
@@ -109,7 +159,11 @@
 
     // Show the manual "tap the button" card as a fallback if a breakout/redirect
     // doesn't take over within ~1.5s (e.g. TikTok has no breakout scheme).
-    function showManualIOS(){ document.getElementById('ios').classList.remove('hidden'); }
+    function showManualIOS(){
+      document.body.classList.add('manual');
+      document.getElementById('ios').classList.remove('hidden');
+      var c = document.getElementById('cornerArrow'); if (c) c.classList.remove('hidden');
+    }
     var bailed = false;
     function markHidden(){ bailed = true; } // page hid → breakout worked, don't flash the card
     document.addEventListener('visibilitychange', markHidden);
