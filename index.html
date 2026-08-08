@@ -57,13 +57,13 @@
     <!-- iOS manual fallback: only shown if the in-app-browser breakout didn't fire
          (e.g. TikTok, or the rare case the scheme is blocked). A real tap works. -->
     <div id="ios" class="hidden">
-      <div class="headline">Get GlowFind</div>
-      <div class="sub">Tap to open the App Store 👇</div>
+      <div class="headline">One quick step ✨</div>
+      <div class="sub">Tap <b>•••</b> at the top-right, then <b>Open in browser</b> — it opens the App Store.</div>
       <a id="appstore" class="btn" href="#">
         <span class="apple"></span>
         <span class="lbl"><small>Download on the</small><b>App Store</b></span>
       </a>
-      <div class="hint" style="margin-top:16px">Not opening? Tap <b>•••</b> (top right) → <b>Open in browser</b>.</div>
+      <div class="hint" style="margin-top:16px">Then tap <b>Get</b> to install GlowFind.</div>
     </div>
 
     <!-- Desktop -->
@@ -128,9 +128,10 @@
       window.location.href = 'intent://' + noProto + '#Intent;scheme=https;package=com.android.chrome;end';
       setTimeout(function(){ if (!bailed && !document.hidden) window.location.replace(storeUrl); }, 1200);
     } else if (isIOS && (isTikTok || isFacebook)) {
-      // No reliable breakout scheme here — try a direct nav, then show the manual card.
-      window.location.href = storeUrl;
-      fallbackLater();
+      // TikTok/Facebook expose NO breakout scheme (even Cloey just shows a card here).
+      // A direct nav would only load the web App Store inside their browser (can't
+      // install), so show the "open in browser" instruction immediately.
+      showManualIOS();
     } else if (isIOS) {
       // Normal Safari / real browser → straight to the App Store.
       window.location.replace(storeUrl);
